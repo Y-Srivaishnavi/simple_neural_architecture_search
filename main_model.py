@@ -1,46 +1,25 @@
-import randomvariables 
-import randomgeneratesequence
-import randomgeneratemodel 
-import randomsearchspace 
+import pandas as pd
+import pickle
+import numpy as np
+from randomNAS import randomsearch
+from randomvariables import nas_data_log
 
-#list to store data for each iteration
-data =[]
-return_data =[]
+# read the data
+train_data = pd.read_csv('DATA/train.csv')
+val_data = pd.read_csv('DATA/val.csv')
 
-#list to store all sequences to check later if any sequences were generated more than once
-samples = []
+# split it into X and y values
+x = np.array(train_data.drop(['label','filename','patient_id'], axis=1, inplace=False)).astype('float32')
+#y = pd.get_dummies(data['label']).values
+y = (train_data['label']).values
 
-#intialize the search space
-vocab = vocab_dict()
+#validation dataset
+x_val = np.array(val_data.drop(['label','filename','patient_id'], axis=1, inplace=False)).astype('float32')
+y_val = (val_data['label']).values
 
-#location to log data
+# let the search begin
+data = randomsearch(x,y,x_val,y_val)
 
-def randomsearch(x_data,y_data,x_val,y_val):
-    #generate the sequence and evalaute and log it
-
-    #iterate over the number of samples we want to generate randomly and evaluate
-    for i in range(numsamples):
-
-        #generate sequence
-        sequence = randomsequencegenerate(vocab,samples)
-        #generate model
-        if sequence != "NA":
-            #print(np.shape(x_data[0]))
-            model = randommodelgenerate(sequence,vocab, np.shape(x_data[0]))
-            #train the model
-            history = trainmodel(model,x_data,y_data,x_val,y_val)
-            #store the val accuracy for the sequence
-            valacc = valmodel(history)
-            #append the results to data and sample
-            samples.append(sequence)
-            data.append((sequence,valacc))
-            #print the data
-            #print(data[i][0])
-            print("Architecture is ",encode_sequences(data[i][0],vocab))
-            print("Validation Accuracy is ", data[i][1])
-            return_data.append([encode_sequences(data[i][0],vocab),data[i][1]])
-        else:
-            data.append("NA")
-            print("Sequence repeated")
-     
-    return return_data
+#log data
+with open(nas_data_log, 'wb') as f:
+    pickle.dump(data, f)
