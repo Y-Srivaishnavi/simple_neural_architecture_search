@@ -3,6 +3,7 @@ import randomgeneratemodel as rgm
 from randomsearchspace import vocab_dict
 import numpy as np
 import pickle
+import os
 
 #location to log data
 
@@ -35,7 +36,7 @@ def randomsearch(X_train,y_train,X_test,y_test) -> None:
         del vocab[id]
 
         # Generate model
-        model = rgm.randommodelgenerate(*sample, X_train.shape, rv.target_classes)
+        model = rgm.randommodelgenerate(*sample, X_train.shape[1], rv.target_classes)
 
         # Train the model
         history = model.fit(
@@ -59,6 +60,10 @@ def randomsearch(X_train,y_train,X_test,y_test) -> None:
 
         # Save data to samples
         samples[sample] = valacc
-
-    with open(rv.nas_data_log, 'wb') as f:
-        pickle.dump(samples, f)  
+    try:
+        with open(rv.nas_data_log, 'wb') as f:
+            pickle.dump(samples, f)  
+    except FileNotFoundError:
+        os.mkdir('LOGS')
+        with open(rv.nas_data_log, 'x') as f:
+            pickle.dump(samples, f)
