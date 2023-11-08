@@ -1,8 +1,9 @@
 import tensorflow as tf
+from randomvariables import metrics
 
-def randommodelgenerate(nodes: int, activation: str, input_shape: tuple, target: int):
+def randommodelgenerate(nodes: tuple, activation: str, input_shape: int, target: int):
     """
-    Generates single-layered neural network from given parameters.
+    Generates triple-layered neural network from given parameters.
 
     Parameters
     -------
@@ -25,12 +26,13 @@ def randommodelgenerate(nodes: int, activation: str, input_shape: tuple, target:
     For simplicity, dropout size is always 0.5
     """
     model = tf.keras.models.Sequential([
-        model.add(tf.keras.Input(shape=input_shape)),
-        tf.keras.layers.Dense(nodes, activation=activation),
-        tf.keras.layers.Dense(target, activation='softmax')
+        tf.keras.Input(shape=(None, input_shape)),
+        tf.keras.layers.Dense(nodes[0], activation=activation),
+        tf.keras.layers.Dense(nodes[1], activation=activation),
+        tf.keras.layers.Dense(1, activation='softmax')
     ])
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
 
     return model                
 
