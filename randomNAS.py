@@ -1,48 +1,64 @@
-from randomvariables import numsamples
-from randomgeneratesequence import randomsequencegenerate
+import randomvariables as rv
 import randomgeneratemodel as rgm
-from randomsearchspace import vocab_dict, encode_sequences
+from randomsearchspace import vocab_dict
 import numpy as np
+import pickle
 
 #location to log data
 
-def randomsearch(x_data,y_data,x_val,y_val):
-    #generate the sequence and evalaute and log it
+def randomsearch(X_train,y_train,X_test,y_test) -> None:
+    """
+    Generate the model, evaluate and log it.
 
-    #list to store data for each iteration
-    data =[]
-    return_data =[]
-
-    #list to store all sequences to check later if any sequences were generated more than once
-    samples = []
+    Parameters
+    -------
+    X_train
+        Input training data.
+    y_train
+        Output of training data.
+    X_test
+        Input testing data.
+    y_test
+        Output of testing data.
+    """
+    # Dictionary to store all combinations to check later 
+    samples = {}
 
     #intialize the search space
     vocab = vocab_dict()
 
     #iterate over the number of samples we want to generate randomly and evaluate
-    for i in range(numsamples):
+    for _ in range(rv.numsamples):
+        # Pick combination randomly from vocab, and delete combination to avoid repetition
+        id = np.random.randint(0, len(vocab))
+        sample = vocab[id]
+        del vocab[id]
 
-        #generate sequence
-        sequence = randomsequencegenerate(vocab,samples)
+        # Generate model
+        model = rgm.randommodelgenerate(*sample, X_train.shape, rv.target_classes)
 
-        #generate model
-        if sequence != "NA":
-            #print(np.shape(x_data[0]))
-            model = rgm.randommodelgenerate(sequence,vocab, np.shape(x_data[0]))
-            #train the model
-            history = rgm.trainmodel(model,x_data,y_data,x_val,y_val)
-            #store the val accuracy for the sequence
-            valacc = rgm.valmodel(history)
-            #append the results to data and sample
-            samples.append(sequence)
-            data.append((sequence,valacc))
-            #print the data
-            #print(data[i][0])
-            print("Architecture is ", encode_sequences(data[i][0],vocab))
-            print("Validation Accuracy is ", data[i][1])
-            return_data.append([encode_sequences(data[i][0],vocab),data[i][1]])
+        # Train the model
+        history = model.fit(
+            X_train,
+            y_train, 
+            rv.batch_size, 
+            rv.epochs, 
+            validation_data =(X_test, y_test),
+            callbacks=None, 
+            verbose=0
+        )
+
+        # Store test accuracy for the combination
+        if(len(history.history['val_accuracy'])==1):
+            valacc = [history.history['val_accuracy'][0]]
         else:
-            data.append("NA")
-            print("Sequence repeated")
+            valacc = np.ma.average(history.history['val_accuracy'], weights = np.arange(1,len(history.history['val_accuracy'])+1),axis=-1)
 
-    return return_data
+        print(f"Architecture is {sample}")
+        print(f"Validation Accuracy is {valacc}")  
+
+        # Save data to samples
+        samples[sample] = valacc
+
+    with open(rv.nas_data_log, 'wb') as f:
+        pickle.dump(samples, f)  
