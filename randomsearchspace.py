@@ -1,59 +1,56 @@
 from randomvariables import target_classes
 
 def vocab_dict():
-    #define conv1d keys and values : {key : (filter size, kernel size)} 
-    #for simplicity activation function is always relu and strides and padding are one. 
+    """
+    Creates a dictionary of possible layers for a neural networks, using pre-defined kernel and filter sizes.
+    
+    Returns
+    -------
+    dict
+        A search-space dictionary containing unique combinations of (filter size, kernel size, number of nodes, activation function)
+    
+    Notes
+    -----
+    For simplicity, activation function is always relu, strides and padding are one, and dropout size is always 0.5
+    """
+    # Define search space of parameters
     filter_size = [3,5,9,11,13,15,17,19,21,23,25,27,29,31]
     kernel_size = [3,5,9,11,13,15,17,19,21,23,25,27,29,31]
+    nodes = [4,8,10,12,16,19,25,50,150,200,300,500,1]
+    activations = ['relu', 'sigmoid', 'softmax']
 
-    layer_params = []
-    layer_id = []
+    # Create a dictionary out of IDs and parameters
+    vocab = {}
+    id = 100
     
-    for i in range(len(filter_size)):
-        for j in range(len(kernel_size)):
-            #create (id (key),filter_size, kernel_size)
-            layer_params.append((filter_size[i],kernel_size[j]))
-            layer_id.append(len(filter_size)*i+j+1)
-
-
-    #create a search space dictionary
-    vocab = dict(zip(layer_id,layer_params))
-
-    #add fully connected layers to the search space - vocab
-    #sticking to relu activation for simplicity
-    nodes = [4,8,10,12,16,19,25,50,150,200,300,500]
-    act_funcs = ['relu']
-
-    for i in range(len(nodes)):
-        for j in range(len(act_funcs)):
-
-            #create (id (key),filter_size, kernel_size)
-            layer_params.append((nodes[i],act_funcs[j]))
-            vocab[len(vocab)+1] = layer_params[-1]
-
-    #add dropout to the dictionary - for simplicity dropout size is always 0.2
-    vocab[len(vocab)+1] = (('dropout'))
-
-    #add the softmax/sigmoid layer to the dictionary
-    if target_classes == 2:
-        vocab[len(vocab)+1] = (target_classes - 1, 'sigmoid')
-    else:
-        vocab[len(vocab)+1] = (target_classes , 'softmax')
+    # Create Cartesian product of all filter and kernel sizes, and node combinations, and assign UID to each tuple
+    for filter in filter_size:
+        for kernel in kernel_size:
+            for node in nodes:
+                id += 1
+                if node != 1:
+                    activation = activations[0]
+                else:
+                    activation = activations[1] if target_classes == 2 else activations[2]
+                      
+                vocab[id] = (filter, kernel, node, activation)
     
     return vocab
 
-#function to encode an architecture sequence
-def encode_sequences(sequence,vocab):
-    #keys = list(vocab.keys())
+def encode_sequences(sequence, vocab):
+    """
+    Function to encode an architecture sequence.
+    """
     values = list(vocab.values())
     encoded_sequences = []
     for value in sequence:
         encoded_sequences.append(values[value-1])
     return encoded_sequences
 
-
-#function to decode the sequences
 def decode_sequence(sequence, vocab):
+    """
+    Function to decode an architecture sequence.
+    """
     keys=list(vocab.keys())
     values = list(vocab.values())
     decoded_sequence = []
