@@ -1,13 +1,12 @@
 ############ Search Space ################
 # set number of classes to be predicted by model
-target_classes = 2  
+target_classes = 3  
 
 ############ NAS ################
 # set the number of neural network models to be generated during the search process.
-numsamples = 50
+numsamples = 2
 
 ############ GENERATE SEQUENCE ################
-# Set maximum number of layers in a sequence
 max_len = 3
 
 ############ GENERATE MODEL ################
