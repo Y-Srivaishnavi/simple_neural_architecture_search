@@ -1,25 +1,23 @@
 import pandas as pd
-import pickle
-import numpy as np
 from randomNAS import randomsearch
-from randomvariables import nas_data_log
+from sklearn.model_selection import train_test_split
 
-# read the data
-train_data = pd.read_csv('DATA/train.csv')
-val_data = pd.read_csv('DATA/val.csv')
+# read the df
+df= pd.read_csv('Neural-Architecture-Search-with-RANDOM-SEARCH-main\\splice\\dna.csv')
+
+# split df for training and testing
+train_df, test_df = train_test_split(df, test_size=0.3, shuffle=True, random_state=34)
+
+# Preprocess data
+train_df['class'] = train_df['class'] - 1
+test_df['class'] = test_df['class'] -1
 
 # split it into X and y values
-x = np.array(train_data.drop(['label','filename','patient_id'], axis=1, inplace=False)).astype('float32')
-#y = pd.get_dummies(data['label']).values
-y = (train_data['label']).values
+X_train=train_df.drop('class', axis=1)
+y_train=train_df['class']
 
-#validation dataset
-x_val = np.array(val_data.drop(['label','filename','patient_id'], axis=1, inplace=False)).astype('float32')
-y_val = (val_data['label']).values
+X_test=test_df.drop('class', axis=1)
+y_test=test_df['class']
 
 # let the search begin
-data = randomsearch(x,y,x_val,y_val)
-
-#log data
-with open(nas_data_log, 'wb') as f:
-    pickle.dump(data, f)
+randomsearch(X_train, y_train, X_test, y_test)
